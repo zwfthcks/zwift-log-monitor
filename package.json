@@ -2,7 +2,8 @@
   "name": "zwift-log-monitor",
   "version": "0.0.1",
   "description": "Monitor Zwift log files for interesting data",
-  "main": "src/index.js",
+  "main": "src/index.cjs",
+  "module": "src/index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
