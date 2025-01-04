@@ -1,0 +1,23 @@
+{
+  "name": "zwift-log-monitor",
+  "version": "0.0.1",
+  "description": "Monitor Zwift log files for interesting data",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zwfthcks/zwift-log-monitor.git"
+  },
+  "author": "Jesper Rosenlund Nielsen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zwfthcks/zwift-log-monitor/issues"
+  },
+  "homepage": "https://github.com/zwfthcks/zwift-log-monitor#readme",
+  "dependencies": {
+    "always-tail": "^0.2.0",
+    "platform-paths": "^1.2.2"
+  }
+}
