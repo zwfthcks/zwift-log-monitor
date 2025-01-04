@@ -1,4 +1,4 @@
-const ZwiftLogMonitor = require('../index.js');
+const ZwiftLogMonitor = require('../index.cjs');
 
 let zlm = new ZwiftLogMonitor({
     log: console.log,
