@@ -5,23 +5,16 @@
 const EventEmitter = require('node:events')
 const { getDocumentsPath } = require('platform-paths');
 
-
 const fs = require('node:fs');
 const path = require('node:path')
 
 const Tail = require('always-tail');
-const { match } = require('node:assert');
 
 const patterns = {
   world :    /\[([^\]]*)\]\s+Loading WAD file 'assets\/Worlds\/world(\d*)\/data.wad/g ,
   position : /\[([^\]]*)\]\s+FPS\s*\d{1,3}(?:|\.\d{1,3}),\s*(\S+),\s*(\S+),\s*(\S+)/ ,
-  // chat :     /\[([^\]]*)\]\s+NETWORK:Heard area message from (\S*) \((.*)\)/ ,
-  // chat :     /\[([^\]]*)\]\s+Chat: (\D*)(\d+)\s\((\S+)\): (.*)/ ,
   chat :     /\[([^\]]*)\]\s+Chat:(?:\s*?(?<name>.*?)) (?<id>\d+)\s\((?<scope>[^\)]*)\): (?<msg>.*)/g ,
-  // chatGlobal :     /\[([^\]]*)\]\s+Chat:(?:\s*?(?<name>.*?)) (?<id>\d+)\s\((?<scope>[^\)]*)\): (?<msg>.*)/g ,
-  // rideon :     /\[([^\]]*)\]\s+HUD_Notify: (\S*) says Ride On!/ 
   rideon :     /\[([^\]]*)\]\s+HUD_Notify: (.*) says Ride On!/g ,
-  // rideonGlobal :     /\[([^\]]*)\]\s+HUD_Notify: (.*) says Ride On!/g ,
   sport: /\[([^\]]*)\]\s+Setting sport to (\S+)/g,
   steeringMode: /\[([^\]]*)\]\s+INFO LEVEL: \[STEERING\] Steering Mode Set to: (\S+)/g,
 }
@@ -29,7 +22,7 @@ const patterns = {
 // could also use this for world:
 // [8:50:32] GAME_LoadLevel()  worldID = 5
 
-// [14:01:33] Chat: Boldrin 1262019 (World): Cansei
+// [14:01:33] Chat: TheName 1262019 (World): Cansei
 // [14:01:45] Chat: 187475 (Paddock): Any
 // [14:02:09] Chat: 8136 (GroupEvent): just a short 3% bump about midway - then rollers around volcano territory
 // [14:02:09] Chat: 46976 (Leader - in paddock): Msg
@@ -61,13 +54,6 @@ class ZwiftLogMonitor extends EventEmitter {
 
     this._ready = false
     this._started = false
-
-    // bind this for functions
-    // this._checkBaseAddress = this._checkBaseAddress.bind(this)
-    // this._getCachedScan = this._getCachedScan.bind(this)
-    // this._writeCachedScanFile = this._writeCachedScanFile.bind(this)
-    // this._readCachedScanFile = this._readCachedScanFile.bind(this)
-    // this.readPlayerData = this.readPlayerData.bind(this)
 
     // initialise _options object with defaults and user set options
     this._options = {
@@ -163,7 +149,6 @@ class ZwiftLogMonitor extends EventEmitter {
 
     //
     tail.on('error', function(data) {
-      // console.log("error:", data);
       this.log("tail error:", data);
     });
 
