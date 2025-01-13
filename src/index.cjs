@@ -121,27 +121,34 @@ class ZwiftLogMonitor extends EventEmitter {
       if ((match  = patterns.position.exec(data))) {
         // position
         this.log("position", match[2], match[3], match[4])
+        this.emit('position', {x: parseFloat(match[2]), y: parseFloat(match[3]), z: parseFloat(match[4])})
       } else if (match = patterns.rideon.exec(data)) {
         // rideon
         // console.log("rideon", match[1], match[2])
         this.log("rideon", match[1], match[2])
+        this.emit('rideon', {time: match[1], user: match[2]})
 
         this.rideOnCount += 1;
+        this.emit('rideons', this.rideOnCount)
       } else if (match = patterns.chat.exec(data)) {
         // chat
         //  matches are: 1 time  2 lastname  3 userid  4 type/scope  5 message
         //  send parameters are: time user message firstname lastname
         // windows['chat'].webContents.send('chat', match[1], match[2], match[3], '', '');
         this.log('chat', match[1], match[3], match[5], match[3] + ' (' + match[4] + ')', match[2]);
+        this.emit('chat', {time: match[1], user: match[3], message: match[5], scope: match[4], name: match[2]});
       } else if (match = patterns.world.exec(data)) {
         // world
         this.log('world', match[2])
+        this.emit('world', match[2])
       } else if (match = patterns.sport.exec(data)) {
         // sport
         this.log('sport', match[2])
+        this.emit('sport', match[2])
       } else if (match = patterns.steeringMode.exec(data)) {
         // steering mode
         this.log('steeringMode', match[2])
+        this.emit('steeringMode', match[2])
       }
 
     });
@@ -212,7 +219,7 @@ class ZwiftLogMonitor extends EventEmitter {
       
       while ((match = patterns.version.exec(logtxt)) !== null) {
         this.log(`Zwift seems to be version: ${match[1]}`)
-        this.emit('info', `version ${match[1]}`)
+        this.emit('info', {version: match[1]})
         return match[1];
       }
     } 
@@ -237,18 +244,18 @@ class ZwiftLogMonitor extends EventEmitter {
         worldLoaded = match[2];
       }
       this.log(`Zwift seems to have loaded world: ${worldLoaded}`)
-      this.emit('info', `world ${worldLoaded}`)
+      this.emit('info', { world: worldLoaded })
       return worldLoaded;
     } 
   }
 
 
   getSport() {
-    return this._getLastGeneric(patterns.sport, 2, 'Sport:')
+    return this._getLastGeneric(patterns.sport, 2, 'sport', 'Sport:')
   }
 
   getSteeringMode() {
-    return this._getLastGeneric(patterns.steeringMode, 2, 'Steering mode:')
+    return this._getLastGeneric(patterns.steeringMode, 2, 'steeringMode', 'Steering mode:')
   }
 
   /**
@@ -257,7 +264,7 @@ class ZwiftLogMonitor extends EventEmitter {
    * @return {*} 
    * @memberof ZwiftLogMonitor
    */
-  _getLastGeneric(pattern, matchItem, description = '') {
+  _getLastGeneric(pattern, matchItem, key, description = '') {
     // this.log('Zwift log file:', this._options.zwiftlog)
     if (fs.existsSync(this._options.zwiftlog)) {
       let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
@@ -268,8 +275,8 @@ class ZwiftLogMonitor extends EventEmitter {
       while ((match = pattern.exec(logtxt)) !== null) {
         result = match[matchItem];
       }
-      this.log('info', `${description} ${result}`)
-      this.emit('info', `${description} ${result}`)
+      this.log('info', `${description || key} ${result}`)
+      this.emit('info', { [key]: result})
       return result;
     } 
   }
@@ -283,9 +290,7 @@ class ZwiftLogMonitor extends EventEmitter {
    * @return {*} 
    * @memberof ZwiftLogMonitor
    */
-  _getAllGeneric(pattern, matchItem, description = '') {
-    // Determine world from log.txt
-    // this.log('Zwift log file:', this._options.zwiftlog)
+  _getAllGeneric(pattern, matchItem, key, description = '') {
     if (fs.existsSync(this._options.zwiftlog)) {
       let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
 
@@ -294,7 +299,8 @@ class ZwiftLogMonitor extends EventEmitter {
       
       while ((match = pattern.exec(logtxt)) !== null) {
         result.push(match[matchItem]);
-        this.emit('info', `${description} ${match[matchItem]}`)
+        this.log('info', `${description || key} ${match[matchItem]}`)
+        this.emit('info', { [key]: match[matchItem]})
       }
       return result;
     } 
