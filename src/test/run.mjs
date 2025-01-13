@@ -14,5 +14,8 @@ zlm.on('ready', () => {
     const steeringMode = zlm.getSteeringMode();
     const sport = zlm.getSport();
 
+    let pacepartner = zlm.getPacePartner();
+    // console.log(pacepartner);
+    
     zlm.start();
 });

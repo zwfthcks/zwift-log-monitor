@@ -5,7 +5,6 @@ let zlm = new ZwiftLogMonitor({
 });
 
 zlm.on('ready', () => {
-
     let messages = zlm.getAllChat();
     // console.log(messages);
     
@@ -14,6 +13,9 @@ zlm.on('ready', () => {
     let playerId = zlm.getPlayerid();
     let steeringMode = zlm.getSteeringMode();
     let sport = zlm.getSport();
+
+    let pacepartner = zlm.getPacePartner();
+    // console.log(pacepartner);
 
     zlm.start();
 });

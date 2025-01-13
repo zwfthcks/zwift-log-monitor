@@ -17,6 +17,13 @@ const patterns = {
   rideon :     /\[([^\]]*)\]\s+HUD_Notify: (.*) says Ride On!/g ,
   sport: /\[([^\]]*)\]\s+Setting sport to (\S+)/g,
   steeringMode: /\[([^\]]*)\]\s+INFO LEVEL: \[STEERING\] Steering Mode Set to: (\S+)/g,
+  pacepartnerjoin: /\[([^\]]*)\]\s+PacePartnerAnalytics:  --PacePartnerJoin--/g,
+  pacepartnerendjoin: /\[([^\]]*)\]\s+PacePartnerAnalytics:  --End PacePartnerJoin--/g,
+  pacepartnerridesummary: /\[([^\]]*)\]\s+PacePartnerAnalytics:  --PacePartnerRideSummary--/g,
+  pacepartnerendridesummary: /\[([^\]]*)\]\s+PacePartnerAnalytics:  --End PacePartnerRideSummary--/g,
+  pacepartnername: /\[([^\]]*)\]\s+pace_partner_name: "([^"]*)"/g,
+  pacepartner_nametype: /\[([^\]]*)\]\s+PacePartnerAnalytics:\s+--(?<type>PacePartnerJoin|PacePartnerRideSummary)--[\s\S]*?pace_partner_name: "(?<name>[^"]+)"/g,
+
 }
 
 // could also use this for world:
@@ -26,10 +33,54 @@ const patterns = {
 // [14:01:45] Chat: 187475 (Paddock): Any
 // [14:02:09] Chat: 8136 (GroupEvent): just a short 3% bump about midway - then rollers around volcano territory
 // [14:02:09] Chat: 46976 (Leader - in paddock): Msg
-//
-//
+
 // [16:30:44] Setting sport to CYCLING
 // [16:30:44] INFO LEVEL: [STEERING] Steering Mode Set to: None
+
+// [9:30:52] HUD_Notify: T.Nishikawa says Ride On!
+// [9:30:52] Got Notable Moment: RIDE ON!
+
+
+// [10:17:55] PacePartnerAnalytics:  --PacePartnerJoin--
+// [10:17:55] PacePartnerAnalytics:    timestamp: "2025/01/11 09:17:55 UTC"
+// [10:17:55] PacePartnerAnalytics:    activity_id: 1644167216
+// [10:17:55] PacePartnerAnalytics:    session_id: "f7cfbef9-f729-4a43-a45c-38f9bec9c993"
+// [10:17:55] PacePartnerAnalytics:    method_joined: "IN_GAME"
+// [10:17:55] PacePartnerAnalytics:    pace_at_drop_in: "1.760000"
+// [10:17:55] PacePartnerAnalytics:    pace_partner_category: "D"
+// [10:17:55] PacePartnerAnalytics:    pace_partner_name: "D. Maria"
+// [10:17:55] PacePartnerAnalytics:    pace_partner_id: "5147276"
+// [10:17:55] PacePartnerAnalytics:    map_id: "Watopia"
+// [10:17:55] PacePartnerAnalytics:    user_route_name: "Watopia's Waistband"
+// [10:17:55] PacePartnerAnalytics:    pace_partner_route: "Watopia's Waistband"
+// [10:17:55] PacePartnerAnalytics:    activity_sport: "CYCLING"
+// [10:17:55] PacePartnerAnalytics:  --End PacePartnerJoin--
+
+
+// [10:07:06] PacePartnerAnalytics:  --PacePartnerRideSummary--
+// [10:07:06] PacePartnerAnalytics:    timestamp: "2025/01/11 09:04:11 UTC"
+// [10:07:06] PacePartnerAnalytics:    activity_id: 1644167216
+// [10:07:06] PacePartnerAnalytics:    session_id: "f7cfbef9-f729-4a43-a45c-38f9bec9c993"
+// [10:07:06] PacePartnerAnalytics:    profile_weight_in_grams: xxxxx
+// [10:07:06] PacePartnerAnalytics:    profile_ftp: xx
+// [10:07:06] PacePartnerAnalytics:    activity_type: "SOLO_FREE_RIDE"
+// [10:07:06] PacePartnerAnalytics:    avg_speed_mph: 20
+// [10:07:06] PacePartnerAnalytics:    avg_watts: 228
+// [10:07:06] PacePartnerAnalytics:    avg_cadence: 88
+// [10:07:06] PacePartnerAnalytics:    distance_with_pace_partners: 1576.742188
+// [10:07:06] PacePartnerAnalytics:    time_with_pace_partner_seconds: 174
+// [10:07:06] PacePartnerAnalytics:    total_activity_time_in_session_seconds: 379
+// [10:07:06] PacePartnerAnalytics:    pace_partner_category: "D"
+// [10:07:06] PacePartnerAnalytics:    pace_partner_name: "D. Taylor"
+// [10:07:06] PacePartnerAnalytics:    pace_partner_id: "5147250"
+// [10:07:06] PacePartnerAnalytics:    map_id: "Watopia"
+// [10:07:06] PacePartnerAnalytics:    user_route_name: "Flat Route"
+// [10:07:06] PacePartnerAnalytics:    pace_partner_route: "Flat Route"
+// [10:07:06] PacePartnerAnalytics:    activity_sport: "CYCLING"
+// [10:07:06] PacePartnerAnalytics:    game_latitude: -11.650834
+// [10:07:06] PacePartnerAnalytics:    game_longitude: 166.949751
+// [10:07:06] PacePartnerAnalytics:    pace_partner_exit: EXIT_RANGE
+// [10:07:06] PacePartnerAnalytics:  --End PacePartnerRideSummary--
 
 
 
@@ -86,6 +137,9 @@ class ZwiftLogMonitor extends EventEmitter {
       this.emit('ready')
     }
 
+
+    this._pacepartnerjoin = false;
+    this._paceparnersummary = false;
     
   }
 
@@ -149,6 +203,28 @@ class ZwiftLogMonitor extends EventEmitter {
         // steering mode
         this.log('steeringMode', match[2])
         this.emit('steeringMode', match[2])
+      } else if (match = patterns.pacepartnerjoin.exec(data)) {
+        // pace partner join
+        this.log('pacepartnerjoin', match[1])
+        this._pacepartnerjoin = true;
+      } else if (this._pacepartnerjoin && (match = patterns.pacepartnername.exec(data))) {
+        // pace partner name
+        this.log('pacepartnername', match[1])
+        this.emit('pacepartner', match[2])
+      } else if (match = patterns.pacepartnerendjoin.exec(data)) {
+        // pace partner end join
+        this.log('pacepartnerendjoin', match[1])
+        this._pacepartnerjoin = false;
+      } else if (match = patterns.pacepartnerridesummary.exec(data)) {
+        // pace partner ride summary
+        this.log('pacepartnerridesummary', match[1])
+        this._pacepartnersummary = true;
+      } else if (match = patterns.pacepartnerendridesummary.exec(data)) {
+        // pace partner end ride summary
+        this.log('pacepartnerendridesummary', match[1])
+        this._pacepartnersummary = false;
+        this.log('pacepartnername', null)
+        this.emit('pacepartner', null)
       }
 
     });
@@ -248,6 +324,36 @@ class ZwiftLogMonitor extends EventEmitter {
       return worldLoaded;
     } 
   }
+
+
+  getPacePartner() {
+    // determine pace partner from log.txt
+
+    // find the last pace partner name in the log file between the last pacepartnerjoin and the last pacepartnerendjoin
+    // if there is a end of ride summary after the last pace partner name, then there is no pace partner
+    // if there is no end of ride summary, then the last pace partner name is the current pace partner
+
+    this.log('Zwift log file:', this._options.zwiftlog)
+    if (fs.existsSync(this._options.zwiftlog)) {
+
+      let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
+      let match;
+      let result = null;
+
+      while ((match = patterns.pacepartner_nametype.exec(logtxt)) !== null) {
+        result = match.groups;
+      }
+
+      this.log('pace partner search:', result)
+      this.emit('info', { pacepartner: result })
+      return (result?.type === 'PacePartnerJoin') ? result.name : null;
+    }
+  }
+
+      
+
+
+    
 
 
   getSport() {
