@@ -124,6 +124,9 @@ class ZwiftLogMonitor extends EventEmitter {
     // log can be set to e.g. console.log in options
     this.log = this._options?.log || (() => { }) 
 
+    this._pacepartnerjoin = false;
+    this._paceparnersummary = false;
+
     // 
     if (!options?.zwiftlog) {
       getDocumentsPath().then((documentsPath) => {
@@ -137,9 +140,6 @@ class ZwiftLogMonitor extends EventEmitter {
       this.emit('ready')
     }
 
-
-    this._pacepartnerjoin = false;
-    this._paceparnersummary = false;
     
   }
 
@@ -168,10 +168,11 @@ class ZwiftLogMonitor extends EventEmitter {
     // interval is set explicitly to ensure sufficiently frequent polling
 
     //
-    tail.on('line', function(data) {
+    tail.on('line', (data) => {
       
       // checking for pattern matches (most likely match is checked first for efficiency)
-      
+      let match;
+
       if ((match  = patterns.position.exec(data))) {
         // position
         this.log("position", match[2], match[3], match[4])
