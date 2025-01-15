@@ -262,7 +262,7 @@ class ZwiftLogMonitor extends EventEmitter {
    * @return {*} 
    * @memberof ZwiftLogMonitor
    */
-  getPlayerid() {
+  getPlayerid(emit = false) {
     // Determine player ID from log.txt
     // this.log('Zwift log file:', this._options.zwiftlog)
     if (fs.existsSync(this._options.zwiftlog)) {
@@ -275,6 +275,9 @@ class ZwiftLogMonitor extends EventEmitter {
         let playerid = parseInt(match[1]);
         this.log(`Zwift seems to run with player ID: ${playerid} = ${('00000000' + playerid.toString(16)).substr(-8)}`)
         this.emit('info', `playerid ${playerid}`)
+        if (emit) {
+          this.emit('playerId', playerid)
+        }
         return playerid
       }
     } 
@@ -287,7 +290,7 @@ class ZwiftLogMonitor extends EventEmitter {
    * @return {*} 
    * @memberof ZwiftLogMonitor
    */
-  getGameVersion() {
+  getGameVersion(emit = false) {
     // Determine game version from log.txt
     // this.log('Zwift log file:', this._options.zwiftlog)
     if (fs.existsSync(this._options.zwiftlog)) {
@@ -299,7 +302,10 @@ class ZwiftLogMonitor extends EventEmitter {
       
       while ((match = patterns.version.exec(logtxt)) !== null) {
         this.log(`Zwift seems to be version: ${match[1]}`)
-        this.emit('info', {gameVersion: match[1]})
+        this.emit('info', { gameVersion: match[1] })
+        if (emit) {
+          this.emit('gameVersion', match[1])
+        }
         return match[1];
       }
     } 
@@ -311,7 +317,7 @@ class ZwiftLogMonitor extends EventEmitter {
    * @return {*} 
    * @memberof ZwiftLogMonitor
    */
-  getWorld() {
+  getWorld(emit = false) {
     // Determine world from log.txt
     // this.log('Zwift log file:', this._options.zwiftlog)
     if (fs.existsSync(this._options.zwiftlog)) {
@@ -325,12 +331,15 @@ class ZwiftLogMonitor extends EventEmitter {
       }
       this.log(`Zwift seems to have loaded world: ${worldLoaded}`)
       this.emit('info', { world: worldLoaded })
+      if (emit) {
+        this.emit('world', worldLoaded)
+      }
       return worldLoaded;
     } 
   }
 
 
-  getPacePartner() {
+  getPacePartner(emit = false) {
     // determine pace partner from log.txt
 
     // find the last pace partner name in the log file between the last pacepartnerjoin and the last pacepartnerendjoin
@@ -350,22 +359,22 @@ class ZwiftLogMonitor extends EventEmitter {
 
       this.log('pace partner search:', result)
       this.emit('info', { pacepartner: result })
-      return (result?.type === 'PacePartnerJoin') ? result.name : null;
+
+      let pacepartner = (result?.type === 'PacePartnerJoin') ? result.name : null;
+      if (emit) {
+        this.emit('pacepartner', pacepartner)
+      }
+      return pacepartner;
     }
   }
 
       
-
-
-    
-
-
-  getSport() {
-    return this._getLastGeneric(patterns.sport, 2, 'sport', 'Sport:')
+  getSport(emit = false) {
+    return this._getLastGeneric(patterns.sport, 2, 'sport', 'Sport:', emit)
   }
 
-  getSteeringMode() {
-    return this._getLastGeneric(patterns.steeringMode, 2, 'steeringMode', 'Steering mode:')
+  getSteeringMode(emit = false) {
+    return this._getLastGeneric(patterns.steeringMode, 2, 'steeringMode', 'Steering mode:', emit)
   }
 
   /**
@@ -374,7 +383,7 @@ class ZwiftLogMonitor extends EventEmitter {
    * @return {*} 
    * @memberof ZwiftLogMonitor
    */
-  _getLastGeneric(pattern, matchItem, key, description = '') {
+  _getLastGeneric(pattern, matchItem, key, description = '', emit = false) {
     // this.log('Zwift log file:', this._options.zwiftlog)
     if (fs.existsSync(this._options.zwiftlog)) {
       let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
@@ -386,7 +395,10 @@ class ZwiftLogMonitor extends EventEmitter {
         result = match[matchItem];
       }
       this.log('info', `${description || key} ${result}`)
-      this.emit('info', { [key]: result})
+      this.emit('info', { [key]: result })
+      if (emit) {
+        this.emit(key, result)
+      }
       return result;
     } 
   }
@@ -398,7 +410,7 @@ class ZwiftLogMonitor extends EventEmitter {
    * @return {*} 
    * @memberof ZwiftLogMonitor
    */
-  _getAllGeneric(pattern, matchItem, key, description = '') {
+  _getAllGeneric(pattern, matchItem, key, description = '', emit = false) {
     if (fs.existsSync(this._options.zwiftlog)) {
       let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
 
@@ -408,7 +420,10 @@ class ZwiftLogMonitor extends EventEmitter {
       while ((match = pattern.exec(logtxt)) !== null) {
         result.push(match[matchItem]);
         this.log('info', `${description || key} ${match[matchItem]}`)
-        this.emit('info', { [key]: match[matchItem]})
+        this.emit('info', { [key]: match[matchItem] })
+        if (emit) {
+          this.emit(key, match[matchItem])
+        }
       }
       return result;
     } 
@@ -423,7 +438,7 @@ class ZwiftLogMonitor extends EventEmitter {
    * @return {*} 
    * @memberof ZwiftLogMonitor
    */
-  getAllChat() {
+  getAllChat(emit = false) {
     // this.log('Zwift log file:', this._options.zwiftlog)
     if (fs.existsSync(this._options.zwiftlog)) {
       let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
@@ -436,9 +451,50 @@ class ZwiftLogMonitor extends EventEmitter {
         //  matches are: 1 time  2 lastname  3 userid  4 type/scope  5 message
         this.log('chat', match[1], match[3], match[5], match[3] + ' (' + match[4] + ')', match[2]);
         this.emit('info', `chat ${match[1]} ${match[3]} ${match[5]} ${match[3]} (${match[4]}) ${match[2]}`)
+        if (emit) {
+          this.emit('chat', { time: match[1], user: match[3], message: match[5], scope: match[4], name: match[2] });
+        }
         messages.push({ time: match[1], user: match[3], message: match[5], scope: match[4], name: match[2] });
       }
       return messages;
+    }
+  }
+ 
+  /**
+   *
+   *
+   * @return {*} 
+   * @memberof ZwiftLogMonitor
+   */
+  getAllRideons(emit = false) {
+    // this.log('Zwift log file:', this._options.zwiftlog)
+    if (fs.existsSync(this._options.zwiftlog)) {
+      let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
+
+      let match;
+      let rideons = [];
+
+      this.rideOnCount = 0;
+
+      while ((match = patterns.rideon.exec(logtxt)) !== null) {
+
+        // rideon
+        // console.log("rideon", match[1], match[2])
+        this.log("rideon", match[1], match[2])
+        this.emit('info', `rideon ${match[1]} ${match[2]}`)
+        rideons.push({ time: match[1], user: match[2] })
+        if (emit) {
+          this.emit('rideon', { time: match[1], user: match[2] })
+        }
+  
+        this.rideOnCount += 1;
+        this.emit('info', `rideons ${this.rideOnCount}`) 
+        if (emit) {
+          this.emit('rideons', this.rideOnCount)
+        }
+        
+      }
+      return rideons;
     }
   }
 
