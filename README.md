@@ -31,7 +31,7 @@ You can listen for the following events:
 
 - **info**
   
-  Is emitted also from the `get<Something>` methods
+  Also emitted from the `get<Something>` methods
 
 - **chat**
 
@@ -94,7 +94,9 @@ See also `src/test/run.cjs` and `src/test/run.mjs`.
 
 ## Methods
 
-There are the following methods for extracting information already written to log.txt:
+There are the following methods for extracting information already written to log.txt. 
+
+All of theses methods accept an optional parameter `emit` which also will cause the events above to be emitted:
 
 ```
 let version = zlm.getGameVersion(); // current game version
@@ -110,6 +112,14 @@ You can also get all the chat messages as an array:
 ```
 let messages = zlm.getAllChat(); // get all chat messages in log.txt
 ```
+
+There is also a method to return ride ons as an array:
+
+```
+let messages = zlm.getAllRideOns(); // get all ride ons in log.txt
+```
+
+
 
 ## Supported
 
