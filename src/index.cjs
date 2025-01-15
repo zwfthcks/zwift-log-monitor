@@ -11,6 +11,8 @@ const path = require('node:path')
 const Tail = require('always-tail');
 
 const patterns = {
+  version: /\[(?:[^\]]*)\]\s+Game Version: ((?:\d+)\.(?:\d+)\.(?:\d+))/g,
+  playerid :    /\[(?:[^\]]*)\]\s+(?:NETCLIENT:){0,1}\[INFO\] Player ID: (\d*)/g ,
   world :    /\[([^\]]*)\]\s+Loading WAD file 'assets\/Worlds\/world(\d*)\/data.wad/g ,
   position : /\[([^\]]*)\]\s+FPS\s*\d{1,3}(?:|\.\d{1,3}),\s*(\S+),\s*(\S+),\s*(\S+)/ ,
   chat :     /\[([^\]]*)\]\s+Chat:(?:\s*?(?<name>.*?)) (?<id>\d+)\s\((?<scope>[^\)]*)\): (?<msg>.*)/g ,
@@ -211,7 +213,7 @@ class ZwiftLogMonitor extends EventEmitter {
       } else if (this._pacepartnerjoin && (match = patterns.pacepartnername.exec(data))) {
         // pace partner name
         this.log('pacepartnername', match[1])
-        this.emit('pacepartner', match[2])
+        this.emit('pacePartner', match[2])
       } else if (match = patterns.pacepartnerendjoin.exec(data)) {
         // pace partner end join
         this.log('pacepartnerendjoin', match[1])
@@ -225,7 +227,15 @@ class ZwiftLogMonitor extends EventEmitter {
         this.log('pacepartnerendridesummary', match[1])
         this._pacepartnersummary = false;
         this.log('pacepartnername', null)
-        this.emit('pacepartner', null)
+        this.emit('pacePartner', null)
+      } else if (match = patterns.playerid.exec(data)) {
+        // playerid
+        this.log('playerId', match[1])
+        this.emit('playerId', match[1])
+      } else if (match = patterns.version.exec(data)) {
+        // version
+        this.log('gameVersion', match[1])
+        this.emit('gameVersion', match[1])
       }
 
     });
@@ -259,13 +269,9 @@ class ZwiftLogMonitor extends EventEmitter {
       let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
       
       // [12:02:30] NETCLIENT:[INFO] Player ID: 793163
-      let patterns = {
-        user :    /\[(?:[^\]]*)\]\s+(?:NETCLIENT:){0,1}\[INFO\] Player ID: (\d*)/g ,
-      }
-      
       let match;
       
-      while ((match = patterns.user.exec(logtxt)) !== null) {
+      while ((match = patterns.playerid.exec(logtxt)) !== null) {
         let playerid = parseInt(match[1]);
         this.log(`Zwift seems to run with player ID: ${playerid} = ${('00000000' + playerid.toString(16)).substr(-8)}`)
         this.emit('info', `playerid ${playerid}`)
@@ -288,15 +294,12 @@ class ZwiftLogMonitor extends EventEmitter {
       let logtxt = fs.readFileSync(this._options.zwiftlog, 'utf8');
 
       // [15:56:28] Game Version: 1.26.1(101164) dda86fe0235debd7146c0d8ceb1b0d5d626ddf77
-      let patterns = {
-        version :    /\[(?:[^\]]*)\]\s+Game Version: ((?:\d+)\.(?:\d+)\.(?:\d+))/g ,
-      }
       
       let match;
       
       while ((match = patterns.version.exec(logtxt)) !== null) {
         this.log(`Zwift seems to be version: ${match[1]}`)
-        this.emit('info', {version: match[1]})
+        this.emit('info', {gameVersion: match[1]})
         return match[1];
       }
     } 
@@ -389,8 +392,6 @@ class ZwiftLogMonitor extends EventEmitter {
   }
 
 
-  
-
   /**
    *
    *
@@ -429,18 +430,16 @@ class ZwiftLogMonitor extends EventEmitter {
 
       let match;
       let messages = [];
-      
+
       while ((match = patterns.chat.exec(logtxt)) !== null) {
-        
-                      //  matches are: 1 time  2 lastname  3 userid  4 type/scope  5 message
-                //  send parameters are: time user message firstname lastname
-                // windows['chat'].webContents.send('chat', match[1], match[2], match[3], '', '');
+
+        //  matches are: 1 time  2 lastname  3 userid  4 type/scope  5 message
         this.log('chat', match[1], match[3], match[5], match[3] + ' (' + match[4] + ')', match[2]);
-        this.emit('info', `chat ${match[1]} ${match[3]} ${match[5]} ${match[3]} (${match[4]}) ${match[2]}`) 
-        messages.push({time: match[1], user: match[3], message: match[5], scope: match[4], name: match[2]});
+        this.emit('info', `chat ${match[1]} ${match[3]} ${match[5]} ${match[3]} (${match[4]}) ${match[2]}`)
+        messages.push({ time: match[1], user: match[3], message: match[5], scope: match[4], name: match[2] });
       }
       return messages;
-    } 
+    }
   }
 
 
