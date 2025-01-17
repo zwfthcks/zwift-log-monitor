@@ -15,6 +15,8 @@ zlm.on('ready', () => {
     let sport = zlm.getSport();
 
     let pacepartner = zlm.getPacePartner();
+
+    let allRideon = zlm.getAllRideons();
     // console.log(pacepartner);
 
     zlm.start();
