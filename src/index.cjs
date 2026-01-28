@@ -132,8 +132,29 @@ class ZwiftLogMonitor extends EventEmitter {
     // 
     if (!options?.zwiftlog) {
       getDocumentsPath().then((documentsPath) => {
+        // Determine where Zwift stores logs. Prefer %LOCALAPPDATA%/Zwift if it contains any .txt files
+        // (common on Windows). Otherwise fall back to Documents/Zwift.
+        let zwiftDocumentsFolder = path.resolve(documentsPath, 'Zwift')
+
+        if (process.platform === 'win32') {
+          const localAppData = process.env.LOCALAPPDATA || path.resolve(process.env.USERPROFILE || '', 'AppData', 'Local')
+          const localZwiftLogs = path.resolve(localAppData, 'Zwift', 'Logs')
+          try {
+            if (fs.existsSync(localZwiftLogs)) {
+              const files = fs.readdirSync(localZwiftLogs)
+              const hasTxt = files.some(f => f.toLowerCase().endsWith('.txt'))
+              if (hasTxt) {
+                // use %LOCALAPPDATA%/Zwift as zwift documents folder
+                zwiftDocumentsFolder = path.resolve(localAppData, 'Zwift')
+              }
+            }
+          } catch (e) {
+            // ignore and fall back to Documents
+          }
+        }
+
         // zwiftlog: path to log.txt for Zwift
-        this._options.zwiftlog = path.resolve(documentsPath, 'Zwift', 'Logs', 'Log.txt')
+        this._options.zwiftlog = path.resolve(zwiftDocumentsFolder, 'Logs', 'Log.txt')
         this._ready = true
         this.emit('ready')
       })
