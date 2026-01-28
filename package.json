@@ -1,6 +1,6 @@
 {
   "name": "@zwfthcks/zwift-log-monitor",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Monitor Zwift log files for interesting data",
   "main": "src/index.cjs",
   "module": "src/index.mjs",
