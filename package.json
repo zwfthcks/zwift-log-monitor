@@ -1,6 +1,6 @@
 {
   "name": "@zwfthcks/zwift-log-monitor",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Monitor Zwift log files for interesting data",
   "main": "src/index.cjs",
   "module": "src/index.mjs",
@@ -20,5 +20,10 @@
   "dependencies": {
     "always-tail": "^0.2.0",
     "platform-paths": "^1.2.2"
+  },
+  "overrides": {
+    "always-tail": {
+      "debug": "^4.4.0"
+    }
   }
 }
